@@ -137,6 +137,7 @@ const App: () => React$Node = () => {
   };
 
   const onLoadTestUser = () => {
+    console.log(`userID: ${userId}`)
     roam
       .loadTestUser(userId)
       .then(setLoadedUserId)
@@ -202,26 +203,28 @@ const App: () => React$Node = () => {
 
   const onToggleTracking = () => {
     Roam.isLocationTracking(status => {
-      if (status === 'GRANTED') {
+      console.log(`status: ${status}`)
+      if (status === 'ENABLED') {
         Roam.stopPublishing();
         Roam.stopTracking();
         setTrackingStatus('DENIED');
       } else {
         Roam.publishAndSave(null);
         if (Platform.OS === 'android') {
-          Roam.startTrackingTimeInterval(2, 'HIGH');
+          Roam.startTrackingDistanceInterval(10, 10, Roam.DesiredAccuracy.HIGH);
         } else {
           Roam.startTrackingCustom(
             true,
-            true,
+            false,
             Roam.ActivityType.FITNESS,
             Roam.DesiredAccuracyIOS.BEST,
             true,
             10,
             10,
-            10,
+            0
           );
         }
+        Roam.updateLocationWhenStationary(10)
         setTrackingStatus('GRANTED');
       }
     });
@@ -232,13 +235,14 @@ const App: () => React$Node = () => {
       Alert.alert('Invalid trip id', 'Please create a test trip before');
       return;
     }
-    if (tripTrackingStatus === 'STARTED') {
-      Alert.alert('Trip already started', 'Please create a test trip before');
-      return;
-    }
-    console.log('Trip Started');
+   // if (tripTrackingStatus === 'STARTED') {
+      // Alert.alert('Trip already started', 'Please create a test trip before');
+
+      // return;
+   // }
+    console.log('Toggle trip');
     roam
-      .toggleTrip(tripId)
+      .toggleTrip(tripId, (tripTrackingStatus === 'STARTED'))
       .then(setTripTrackingStatus)
       .catch(error => {
         if (error === roam.ErrorCodes.InvalidUserId) {
@@ -310,6 +314,7 @@ const App: () => React$Node = () => {
       return;
     }
 
+    console.log(`tripID before subscribe: ${tripId}`)
     Roam.subscribeTripStatus(tripId);
     setTripSubscriptionStatus('Enabled');
   };
@@ -327,12 +332,14 @@ const App: () => React$Node = () => {
   };
 
   const onListenTripUpdates = () => {
-    if (subscriptionStatus !== 'Enabled') {
+    if (tripSubscriptionStatus !== 'Enabled') {
       Alert.alert('Error', 'Please, subscribe trip before');
       return;
     }
     Roam.startListener('trip_status', tripLocation => {
-      console.log('Location', tripLocation);
+      console.log('Trip Location', tripLocation);
+      let METADATA = {'METADATA': {'tripId': tripLocation.tripId, 'distance': tripLocation.distance, 'duration': tripLocation.duration, 'tripState': 'ongoing'}}
+      Roam.publishAndSave(METADATA)
       setTripUpdateCounter(count => count + 1);
     });
     setTripListenUpdatesStatus('Enabled');
