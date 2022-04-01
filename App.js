@@ -52,6 +52,9 @@ const App: () => React$Node = () => {
   const [updateCoutner, setUpdateCounter] = useState(0);
   const [tripUpdateCoutner, setTripUpdateCounter] = useState(0);
 
+  const [latitude, setLatitude] = useState(0);
+  const [longitude, setLongitude] = useState(0);
+
   // Permissions
   const [permissions, setPermissions] = useReducer(
     (state, update) => ({
@@ -116,6 +119,8 @@ const App: () => React$Node = () => {
   const onGetTripSummaryPress = () => {
     const handleGetTripSummaryCallback = async success => {
       setTripSummaryStatus('SUCCESS');
+      setLatitude(success.route[0].latitude);
+      setLongitude(success.route[0].longitude);
       setDistanceCovered(success.distanceCovered);
       setDuration(success.duration);
       setElevationGain(success.elevationGain);
@@ -469,6 +474,8 @@ const App: () => React$Node = () => {
               {'\n'}Duration: {duration}
               {'\n'}Elevation Gain: {elevationGain}
               {'\n'}Route Count: {routeCount}
+              {'\n'}Latitude: {latitude}
+              {'\n'}Longitude: {longitude}
             </Text>
           </View>
         </ScrollView>
